@@ -7,6 +7,7 @@ import org.apache.commons.cli.HelpFormatter;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters.ClusterMspConverter;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters.ConverterFactory;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters.IClusterConverter;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.io.ClusteringFileReader;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.io.IClusterSourceListener;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.io.IClusterSourceReader;
@@ -66,16 +67,21 @@ public class ClusteringFileConverterCli {
             String outputPath = commandLine.getOptionValue(CliOptions.OPTIONS.OUTPUT_PATH.getValue());
             System.out.println("Outputpath = " + outputPath);
 
+            FastaFile fastaFile = null;
+            if (commandLine.hasOption(CliOptions.OPTIONS.FASTA.getValue())) {
+                fastaFile = new FastaFile(new File(commandLine.getOptionValue(CliOptions.OPTIONS.FASTA.getValue())));
+            }
+
             String[] formats = commandLine.getOptionValues(CliOptions.OPTIONS.FORMAT.getValue());
 
             // process the files
             if (combineResults) {
-                convertClusteringFilesCombined(commandLine.getArgs(), outputPath, minSize, maxSize, minRatio, maxRatio, species, formats, specLibAnnotation, specLibNormalize);
+                convertClusteringFilesCombined(commandLine.getArgs(), outputPath, minSize, maxSize, minRatio, maxRatio, species, formats, specLibAnnotation, specLibNormalize, fastaFile);
             }
             else {
                 // process each file separately
                 for (String inputFilename : commandLine.getArgs()) {
-                    convertCluteringFile(inputFilename, outputPath, minSize, maxSize, minRatio, maxRatio, species, formats, specLibAnnotation, specLibNormalize);
+                    convertCluteringFile(inputFilename, outputPath, minSize, maxSize, minRatio, maxRatio, species, formats, specLibAnnotation, specLibNormalize, fastaFile);
                 }
             }
         } catch (Exception e) {
@@ -84,7 +90,7 @@ public class ClusteringFileConverterCli {
         }
     }
 
-    private static void convertClusteringFilesCombined(String[] inputFilenames, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize) throws Exception{
+    private static void convertClusteringFilesCombined(String[] inputFilenames, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize, FastaFile fastaFile) throws Exception{
         File outputPath = new File(outputPathString);
 
         // get all converters
@@ -97,6 +103,7 @@ public class ClusteringFileConverterCli {
             converter.setMinRatio(minRatio);
             converter.setMaxRatio(maxRatio);
             converter.setSpecies(species);
+            converter.setFastaFile(fastaFile);
 
             if (converter.getClass() == ClusterMspConverter.class) {
                 ClusterMspConverter tmp = (ClusterMspConverter) converter;
@@ -130,7 +137,7 @@ public class ClusteringFileConverterCli {
         }
     }
 
-    private static void convertCluteringFile(String inputFilename, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize) throws Exception {
+    private static void convertCluteringFile(String inputFilename, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize, FastaFile fastaFile) throws Exception {
         System.out.println("Converting " + inputFilename + "\n");
 
         // get all converters
@@ -144,6 +151,7 @@ public class ClusteringFileConverterCli {
             converter.setMinRatio(minRatio);
             converter.setMaxRatio(maxRatio);
             converter.setSpecies(species);
+            converter.setFastaFile(fastaFile);
 
             if (converter.getClass() == ClusterMspConverter.class) {
                 ClusterMspConverter tmp = (ClusterMspConverter) converter;

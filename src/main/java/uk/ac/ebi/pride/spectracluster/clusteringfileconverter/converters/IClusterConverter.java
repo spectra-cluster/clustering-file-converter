@@ -1,5 +1,6 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.io.IClusterSourceListener;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
 
@@ -63,10 +64,13 @@ public interface IClusterConverter extends IClusterSourceListener {
     public void setMinRatio(float minRatio);
     public void setMaxRatio(float maxRatio);
     public void setSpecies(Set<String> taxonomyIds);
-    public Set<String> getSpecies();
+    public void setFastaFile(FastaFile fastFile);
+
 
     public int getMinSize();
     public int getMaxSize();
     public float getMinRatio();
     public float getMaxRatio();
+    public Set<String> getSpecies();
+    public FastaFile getFastaFile();
 }

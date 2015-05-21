@@ -16,6 +16,7 @@ public class CliOptions {
         SPECIES("species"),
         COMBINE("combine"),
         FORMAT("format"),
+        FASTA("fasta"),
         SPEC_LIB_ANNOTATION("spec_lib_add_annotation"),
         SPEC_LIB_NORMALIZE("spec_lib_normalize"),
         OUTPUT_PATH("output_path");
@@ -106,6 +107,12 @@ public class CliOptions {
                 .withDescription("if set spectra are normalized according to the MSP specification (highest peak = 10,000), intensity reported as integer")
                 .create(OPTIONS.SPEC_LIB_NORMALIZE.getValue());
         options.addOption(specLibNormalize);
+
+        Option fasta = OptionBuilder
+                .withDescription("if set only peptides from the specified proteins will be exported and mapped to these proteins.")
+                .hasArg()
+                .create(OPTIONS.FASTA.getValue());
+        options.addOption(fasta);
 
 		Option help = OptionBuilder
                 .withDescription("print this help.")

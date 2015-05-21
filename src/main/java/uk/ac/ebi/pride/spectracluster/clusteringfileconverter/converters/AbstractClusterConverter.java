@@ -1,5 +1,6 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ISpectrumReference;
@@ -22,6 +23,9 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     protected float minRatio = 0;
     protected float maxRatio = 1;
     protected Set<String> species = null;
+    protected FastaFile fastaFile = null;
+
+    protected String currentAnnotation = null;
 
     @Override
     public void setOutputPath(String outputPath) {
@@ -141,6 +145,16 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
         if (!containsSpecies)
             return false;
 
+        // check if a fasta file was set
+        if (fastaFile != null) {
+            String proteinAnnotation = fastaFile.getProteinAnnotation(cluster.getMaxSequence());
+
+            if (proteinAnnotation == null)
+                return false;
+
+            currentAnnotation = proteinAnnotation;
+        }
+
         return true;
     }
 
@@ -180,7 +194,18 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
         return species;
     }
 
+    @Override
     public void setSpecies(Set<String> species) {
         this.species = species;
+    }
+
+    @Override
+    public FastaFile getFastaFile() {
+        return fastaFile;
+    }
+
+    @Override
+    public void setFastaFile(FastaFile fastaFile) {
+        this.fastaFile = fastaFile;
     }
 }

@@ -427,6 +427,8 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         commentString.append(" Naa=").append(clusterUtilities.getMaxSequence().length());
         commentString.append(" MaxRatio=").append(String.format("%.3f", clusterUtilities.getMaxILAngosticRatio()));
         commentString.append(" PrecursorMzRange=").append(String.format("%.4f", cluster.getSpectrumPrecursorMzRange()));
+        if (currentAnnotation != null)
+            commentString.append(" Protein=" + currentAnnotation);
         // TODO: add PRIDE Cluster specific fields
 
         return commentString.toString();
