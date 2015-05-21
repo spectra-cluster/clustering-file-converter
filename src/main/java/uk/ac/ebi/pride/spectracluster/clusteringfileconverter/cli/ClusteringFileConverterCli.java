@@ -13,7 +13,9 @@ import uk.ac.ebi.pride.spectracluster.clusteringfilereader.io.IClusterSourceRead
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by jg on 01.08.14.
@@ -48,7 +50,12 @@ public class ClusteringFileConverterCli {
                     commandLine.getOptionValue(CliOptions.OPTIONS.MAX_RATIO.getValue(), "1")
             );
 
-            String species = commandLine.getOptionValue(CliOptions.OPTIONS.SPECIES.getValue(), null);
+            Set<String> species = new HashSet<String>();
+            if (commandLine.hasOption(CliOptions.OPTIONS.SPECIES.getValue())) {
+                for (String s : commandLine.getOptionValues(CliOptions.OPTIONS.SPECIES.getValue())) {
+                    species.add(s);
+                }
+            }
 
             boolean combineResults = commandLine.hasOption(CliOptions.OPTIONS.COMBINE.getValue());
             boolean specLibAnnotation = commandLine.hasOption(CliOptions.OPTIONS.SPEC_LIB_ANNOTATION.getValue());
@@ -77,7 +84,7 @@ public class ClusteringFileConverterCli {
         }
     }
 
-    private static void convertClusteringFilesCombined(String[] inputFilenames, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, String species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize) throws Exception{
+    private static void convertClusteringFilesCombined(String[] inputFilenames, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize) throws Exception{
         File outputPath = new File(outputPathString);
 
         // get all converters
@@ -123,7 +130,7 @@ public class ClusteringFileConverterCli {
         }
     }
 
-    private static void convertCluteringFile(String inputFilename, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, String species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize) throws Exception {
+    private static void convertCluteringFile(String inputFilename, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize) throws Exception {
         System.out.println("Converting " + inputFilename + "\n");
 
         // get all converters

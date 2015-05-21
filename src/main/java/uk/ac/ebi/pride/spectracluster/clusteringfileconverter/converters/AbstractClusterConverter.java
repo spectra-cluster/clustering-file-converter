@@ -7,6 +7,7 @@ import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ISpectrumRefe
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Set;
 
 /**
  * Created by jg on 10.08.14.
@@ -20,7 +21,7 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     protected int maxSize = Integer.MAX_VALUE;
     protected float minRatio = 0;
     protected float maxRatio = 1;
-    protected String species = null;
+    protected Set<String> species = null;
 
     @Override
     public void setOutputPath(String outputPath) {
@@ -116,11 +117,19 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
         // check if the taxonomy needs to be taken into consideration
         boolean containsSpecies = false;
 
-        if (species != null && species.length() > 0) {
+        if (species != null && species.size() > 0) {
             for (ISpectrumReference specRef : cluster.getSpectrumReferences()) {
-                if (species.equals(specRef.getSpecies()))  {
-                    containsSpecies = true;
-                    break;
+                // ignore if no species is available
+                if (specRef.getSpecies() == null)
+                    continue;
+
+                String[] specRefSpecies = specRef.getSpecies().split(",");
+
+                for (String s : specRefSpecies) {
+                    if (species.contains(s)) {
+                        containsSpecies = true;
+                        break;
+                    }
                 }
             }
         }
@@ -167,12 +176,11 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     }
 
     @Override
-    public void setSpecies(String species) {
-        this.species = species;
+    public Set<String> getSpecies() {
+        return species;
     }
 
-    @Override
-    public String getSpecies() {
-        return species;
+    public void setSpecies(Set<String> species) {
+        this.species = species;
     }
 }

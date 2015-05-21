@@ -72,7 +72,7 @@ public class CliOptions {
         options.addOption(maxSize);
 
         Option species = OptionBuilder
-                .withDescription("only exports cluster that contain at least on spectrum from the specified species.")
+                .withDescription("only exports cluster that contain at least one spectrum from the specified species. Multiple species may be defined")
                 .hasArg()
                 .withArgName("TAXONOMY ID")
                 .withType(Integer.class)

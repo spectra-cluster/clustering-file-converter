@@ -34,6 +34,11 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         loadModToDeltaMap();
     }
 
+    /**
+     * This code was extracted from the SpectraST source code. I was
+     * unable to find these modifications in the MSP format
+     * specification.
+     */
     private void loadModToDeltaMap() {
         modToDeltaMap.put("ICAT_light", 227.126991);
         modToDeltaMap.put("ICAT-C", 227.126991); // PSI new name
@@ -152,7 +157,8 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         StringBuilder mspString = new StringBuilder();
 
         mspString.append("Name: ").append(generateClusterName(clusterUtilities)).append("\n");
-        //mspString.append("MW: ").append(cluster.getAvPrecursorMz()).append("\n"); // this line is optional
+        // TODO: calculate molecular weight based on (m/z * charge) - (charge * 1.008) but this line is optional
+        // mspString.append("MW: ").append(cluster.getAvPrecursorMz()).append("\n");
 
         String commentString = generateComments(cluster, clusterUtilities);
         mspString.append("Comment: ").append(commentString).append("\n");
@@ -421,6 +427,7 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         commentString.append(" Naa=").append(clusterUtilities.getMaxSequence().length());
         commentString.append(" MaxRatio=").append(String.format("%.3f", clusterUtilities.getMaxILAngosticRatio()));
         commentString.append(" PrecursorMzRange=").append(String.format("%.4f", cluster.getSpectrumPrecursorMzRange()));
+        // TODO: add PRIDE Cluster specific fields
 
         return commentString.toString();
     }
