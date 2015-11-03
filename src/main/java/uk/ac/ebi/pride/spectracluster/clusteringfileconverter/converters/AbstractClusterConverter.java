@@ -1,5 +1,7 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
+import uk.ac.ebi.pride.spectracluster.analysis.util.ClusterUtilities;
+import uk.ac.ebi.pride.spectracluster.analysis.util.SpectrumAnnotator;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
@@ -24,6 +26,8 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     protected float maxRatio = 1;
     protected Set<String> species = null;
     protected FastaFile fastaFile = null;
+    protected float minTic = Float.MAX_VALUE;
+    protected float maxTic = 0;
 
     protected String currentAnnotation = null;
 
@@ -99,6 +103,22 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
         return maxRatio;
     }
 
+    public float getMinTic() {
+        return minTic;
+    }
+
+    public void setMinTic(float minTic) {
+        this.minTic = minTic;
+    }
+
+    public float getMaxTic() {
+        return maxTic;
+    }
+
+    public void setMaxTic(float maxTic) {
+        this.maxTic = maxTic;
+    }
+
     @Override
     public abstract void onNewClusterRead(ICluster newCluster);
 
@@ -109,14 +129,29 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
      * @return
      */
     protected boolean shouldClusterBeExported(ICluster cluster) {
-        if (cluster.getSpecCount() < minSize)
+        if (cluster.getIdentifiedSpecCount() < minSize)
             return false;
-        if (cluster.getSpecCount() > maxSize)
+        if (cluster.getIdentifiedSpecCount() > maxSize)
             return false;
         if (cluster.getMaxRatio() < minRatio)
             return false;
         if (cluster.getMaxRatio() > maxRatio)
             return false;
+
+        // get the explained TIC
+        try {
+            float explainedTIC = SpectrumAnnotator.getAnnotatedTic(cluster, 0.5f);
+
+            if (explainedTIC < minTic)
+                return false;
+            if (explainedTIC > maxTic)
+                return false;
+        }
+        catch (Exception e) {
+            // don't export clusters that cannot be explained
+            return false;
+        }
+
 
         // check if the taxonomy needs to be taken into consideration
         boolean containsSpecies = false;

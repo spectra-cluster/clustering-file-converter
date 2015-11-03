@@ -13,6 +13,8 @@ public class CliOptions {
         MIN_RATIO("min_ratio"),
         MIN_SIZE("min_size"),
         MAX_SIZE("max_size"),
+        MIN_TIC("min_tic"),
+        MAX_TIC("max_tic"),
         SPECIES("species"),
         COMBINE("combine"),
         FORMAT("format"),
@@ -57,7 +59,7 @@ public class CliOptions {
         options.addOption(maxRatio);
 
         Option minSize = OptionBuilder
-                .withDescription("limits the minimum SIZE a cluster may have to be included.")
+                .withDescription("limits the minimum number of identified spectra a cluster may have to be included.")
                 .hasArg()
                 .withArgName("SIZE")
                 .withType(Integer.class)
@@ -65,12 +67,28 @@ public class CliOptions {
         options.addOption(minSize);
 
         Option maxSize = OptionBuilder
-                .withDescription("limits the maximum SIZE a cluster may have to be included.")
+                .withDescription("limits the maximum number of identified spectra a cluster may have to be included.")
                 .hasArg()
                 .withArgName("SIZE")
                 .withType(Integer.class)
                 .create(OPTIONS.MAX_SIZE.getValue());
         options.addOption(maxSize);
+
+        Option maxTic = OptionBuilder
+                .withDescription("limits the maximum ion current explained by y- and b-ions.")
+                .hasArg()
+                .withArgName("fraction TIC")
+                .withType(Double.class)
+                .create(OPTIONS.MAX_TIC.getValue());
+        options.addOption(maxTic);
+
+        Option minTic = OptionBuilder
+                .withDescription("limits the minimum ion current explained by y- and b-ions.")
+                .hasArg()
+                .withArgName("fraction TIC")
+                .withType(Double.class)
+                .create(OPTIONS.MIN_TIC.getValue());
+        options.addOption(minTic);
 
         Option species = OptionBuilder
                 .withDescription("only exports cluster that contain at least one spectrum from the specified species. Multiple species may be defined")
