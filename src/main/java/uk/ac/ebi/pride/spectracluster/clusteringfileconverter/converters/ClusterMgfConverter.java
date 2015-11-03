@@ -29,9 +29,11 @@ public class ClusterMgfConverter extends AbstractClusterConverter {
 
         StringBuilder stringBuilder = new StringBuilder("BEGIN IONS\n");
 
-        stringBuilder.append(String.format("TITLE=%s\n", (cluster.getId() != null) ? cluster.getId() : clusterUtilities.getMaxSequence(), clusterCounter));
+        stringBuilder.append(String.format("TITLE=%s\n",
+                (cluster.getId() != null ? cluster.getId() + ",sequence=" : "") + (cluster.getIdentifiedSpecCount() > 0 ? clusterUtilities.getMaxSequence() : "UNIDENTIFIED"),
+                clusterCounter));
         int charge = clusterUtilities.getCharge();
-        stringBuilder.append(String.format("PEPMASS=%.3f\n", cluster.getAvPrecursorMz()));
+        stringBuilder.append(String.format("PEPMASS=%.4f\n", cluster.getAvPrecursorMz()));
         stringBuilder.append(String.format("CHARGE=%d%c\n", Math.abs(charge), (charge > 0 ? '+' : '-')));
 
         // add the peak list
