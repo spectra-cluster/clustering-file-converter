@@ -38,6 +38,9 @@ public class EmptySequenceTest {
 
             String mspString = converter.convertCluster(cluster);
 
+            if (mspString.length() < 1)
+                continue;
+
             String[] lines = mspString.split("\n");
             String sequence = lines[0].substring(6, lines[0].length() - 2);
 

@@ -38,9 +38,12 @@ public class MissingAAModTest {
 
             String mspString = converter.convertCluster(cluster);
 
+            if (mspString.length() < 1)
+                continue;
+
             String[] lines = mspString.split("\n");
             String sequence = lines[0].substring(6, lines[0].length() - 2);
-            String commentLine = lines[1].substring(31);
+            String commentLine = lines[2].substring(31);
 
             if (!commentLine.startsWith("P")) {
                 String modPosString = commentLine.substring(0, commentLine.indexOf(','));

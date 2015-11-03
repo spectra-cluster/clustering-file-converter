@@ -6,6 +6,7 @@ import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ModificationP
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IModification;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
+import uk.ac.ebi.pride.utilities.exception.IllegalAminoAcidSequenceException;
 import uk.ac.ebi.pride.utilities.iongen.model.ProductIon;
 import uk.ac.ebi.pride.utilities.iongen.model.ProductIonSet;
 import uk.ac.ebi.pridemod.ModReader;
