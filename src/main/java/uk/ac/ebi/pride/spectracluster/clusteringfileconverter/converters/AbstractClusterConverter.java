@@ -129,13 +129,15 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
      * @return
      */
     protected boolean shouldClusterBeExported(ICluster cluster) {
+        ClusterUtilities clusterUtilities = new ClusterUtilities(cluster);
+
         if (cluster.getIdentifiedSpecCount() < minSize)
             return false;
         if (cluster.getIdentifiedSpecCount() > maxSize)
             return false;
-        if (cluster.getMaxRatio() < minRatio)
+        if (clusterUtilities.getMaxILAngosticRatio() < minRatio)
             return false;
-        if (cluster.getMaxRatio() > maxRatio)
+        if (clusterUtilities.getMaxILAngosticRatio() > maxRatio)
             return false;
 
         // get the explained TIC
