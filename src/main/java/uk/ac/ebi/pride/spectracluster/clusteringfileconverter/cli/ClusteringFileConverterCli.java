@@ -51,6 +51,14 @@ public class ClusteringFileConverterCli {
                     commandLine.getOptionValue(CliOptions.OPTIONS.MAX_RATIO.getValue(), "1")
             );
 
+            float minTic = Float.parseFloat(
+                    commandLine.getOptionValue(CliOptions.OPTIONS.MIN_TIC.getValue(), "0")
+            );
+
+            float maxTic = Float.parseFloat(
+                    commandLine.getOptionValue(CliOptions.OPTIONS.MAX_TIC.getValue(), "1")
+            );
+
             Set<String> species = new HashSet<String>();
             if (commandLine.hasOption(CliOptions.OPTIONS.SPECIES.getValue())) {
                 for (String s : commandLine.getOptionValues(CliOptions.OPTIONS.SPECIES.getValue())) {
@@ -76,12 +84,12 @@ public class ClusteringFileConverterCli {
 
             // process the files
             if (combineResults) {
-                convertClusteringFilesCombined(commandLine.getArgs(), outputPath, minSize, maxSize, minRatio, maxRatio, species, formats, specLibAnnotation, specLibNormalize, fastaFile);
+                convertClusteringFilesCombined(commandLine.getArgs(), outputPath, minSize, maxSize, minRatio, maxRatio, minTic, maxTic, species, formats, specLibAnnotation, specLibNormalize, fastaFile);
             }
             else {
                 // process each file separately
                 for (String inputFilename : commandLine.getArgs()) {
-                    convertCluteringFile(inputFilename, outputPath, minSize, maxSize, minRatio, maxRatio, species, formats, specLibAnnotation, specLibNormalize, fastaFile);
+                    convertCluteringFile(inputFilename, outputPath, minSize, maxSize, minRatio, maxRatio, minTic, maxTic, species, formats, specLibAnnotation, specLibNormalize, fastaFile);
                 }
             }
         } catch (Exception e) {
@@ -90,7 +98,7 @@ public class ClusteringFileConverterCli {
         }
     }
 
-    private static void convertClusteringFilesCombined(String[] inputFilenames, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize, FastaFile fastaFile) throws Exception{
+    private static void convertClusteringFilesCombined(String[] inputFilenames, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, float minTic, float maxTic, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize, FastaFile fastaFile) throws Exception{
         File outputPath = new File(outputPathString);
 
         // get all converters
@@ -102,6 +110,8 @@ public class ClusteringFileConverterCli {
             converter.setMaxSize(maxSize);
             converter.setMinRatio(minRatio);
             converter.setMaxRatio(maxRatio);
+            converter.setMinTic(minTic);
+            converter.setMaxTic(maxTic);
             converter.setSpecies(species);
             converter.setFastaFile(fastaFile);
 
@@ -137,7 +147,7 @@ public class ClusteringFileConverterCli {
         }
     }
 
-    private static void convertCluteringFile(String inputFilename, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize, FastaFile fastaFile) throws Exception {
+    private static void convertCluteringFile(String inputFilename, String outputPathString, int minSize, int maxSize, float minRatio, float maxRatio, float minTic, float maxTic, Set<String> species, String[] formats, boolean specLibAnnotation, boolean specLibNormalize, FastaFile fastaFile) throws Exception {
         System.out.println("Converting " + inputFilename + "\n");
 
         // get all converters
@@ -150,6 +160,8 @@ public class ClusteringFileConverterCli {
             converter.setMaxSize(maxSize);
             converter.setMinRatio(minRatio);
             converter.setMaxRatio(maxRatio);
+            converter.setMinTic(minTic);
+            converter.setMaxTic(maxTic);
             converter.setSpecies(species);
             converter.setFastaFile(fastaFile);
 
