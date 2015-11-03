@@ -1,18 +1,18 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
 import uk.ac.ebi.pride.spectracluster.analysis.util.ClusterUtilities;
+import uk.ac.ebi.pride.spectracluster.analysis.util.SpectrumAnnotator;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ModificationPositionComparator;
-import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.*;
-import uk.ac.ebi.pride.utilities.iongen.impl.DefaultPrecursorIon;
-import uk.ac.ebi.pride.utilities.iongen.ion.FragmentIonUtilities;
-import uk.ac.ebi.pride.utilities.iongen.model.*;
-import uk.ac.ebi.pride.utilities.mol.Element;
-import uk.ac.ebi.pride.utilities.mol.Group;
-import uk.ac.ebi.pride.utilities.mol.PTModification;
-import uk.ac.ebi.pride.utilities.mol.Peptide;
+import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
+import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IModification;
+import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
+import uk.ac.ebi.pride.utilities.iongen.model.ProductIon;
+import uk.ac.ebi.pride.utilities.iongen.model.ProductIonSet;
 import uk.ac.ebi.pridemod.ModReader;
 import uk.ac.ebi.pridemod.model.PTM;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -20,127 +20,25 @@ import java.util.*;
  */
 public class ClusterMspConverter extends AbstractClusterConverter {
     public final static String FILE_EXTENSION = "msp";
-    public final static Double MOD_TOLERANCE = 0.01;
-    public final static float ANNOTATION_TOLERANCE = 0.8F; // as per the MSP file specification
+    public final static Double MOD_TOLERANCE = 0.001;
+    public final static float ANNOTATION_TOLERANCE = 0.5F;
     public final int BASE_PEAK_INTENSITY = 10000; // intensity used for base peak normalization
 
-    private Map<String, Double> modToDeltaMap = new HashMap<String, Double>();
-    private ModReader modReader = ModReader.getInstance();
+    private Map<String, Double> modToDeltaMap;
     private boolean normalizeSpectra = false;
     private boolean addAnnotationString = false;
     private ProductIon lastProductIon = null;
 
+    // logging
+    private Set<String> unresolvedAccessions = new HashSet<String>();
+    private Set<String> missingModMassAccessions = new HashSet<String>();
+    private Set<String> unmatchedModificationAccessions = new HashSet<String>();
+
     public ClusterMspConverter() {
-        loadModToDeltaMap();
+        modToDeltaMap = loadMspModMap();
     }
 
-    /**
-     * This code was extracted from the SpectraST source code. I was
-     * unable to find these modifications in the MSP format
-     * specification.
-     */
-    private void loadModToDeltaMap() {
-        modToDeltaMap.put("ICAT_light", 227.126991);
-        modToDeltaMap.put("ICAT-C", 227.126991); // PSI new name
-
-        modToDeltaMap.put("ICAT_heavy", 236.157185);
-        modToDeltaMap.put("ICAT-C:13C(9)", 236.157185); // PSI new name
-
-        modToDeltaMap.put("AB_old_ICATd0", 442.224991);
-        modToDeltaMap.put("ICAT-D", 442.224991); // PSI new name
-
-        modToDeltaMap.put("AB_old_ICATd8", 450.275205);
-        modToDeltaMap.put("ICAT-D:2H(8)", 450.275205); // PSI new name
-
-
-        modToDeltaMap.put("Carbamidomethyl", 57.021464);
-
-        modToDeltaMap.put("Carboxymethyl", 58.005479);
-
-        modToDeltaMap.put("Propionamide", 71.037114); // alkylation of acrylamide to cysteines
-        modToDeltaMap.put("Propionamide:2H(3)", 74.055944); // alkylation of heavy acrylamide to cysteines
-        modToDeltaMap.put("Propionamide:13C(3)", 74.047178); // alkylation of heavy acrylamide to cysteines
-
-        modToDeltaMap.put("Oxidation", 15.99491);
-
-        modToDeltaMap.put("Acetyl", 42.010565); // acetylation of N terminus
-
-        modToDeltaMap.put("Deamidation", 0.984016);
-        modToDeltaMap.put("Deamidated", 0.984016); // PSI new name
-
-        modToDeltaMap.put("Pyro-cmC", 39.994915); // cyclicization of N-terminal CAM-cysteine (FIXED value 01/27/07)
-        modToDeltaMap.put("Pyro-carbamidomethyl", 39.994915); // PSI new name
-
-        modToDeltaMap.put("Pyro-glu", -17.026549); // loss of NH3 from glutamine
-        modToDeltaMap.put("Gln->pyro-Glu", -17.026549); // PSI new name
-
-        modToDeltaMap.put("Pyro_glu", -18.010565); // loss of H2O from glutamic acid
-        modToDeltaMap.put("Glu->pyro-Glu", -18.010565); // PSI new name
-
-        modToDeltaMap.put("Amide", -0.984016); // amidation of C terminus
-        modToDeltaMap.put("Amidated", -0.984016); // PSI new name
-
-        modToDeltaMap.put("Phospho", 79.966331); // phosphorylation
-
-        modToDeltaMap.put("Thiophospho", 95.943487); // phosphorylation
-
-        modToDeltaMap.put("Sulfo", 79.956815); // O-sulfonation
-
-        modToDeltaMap.put("Methyl", 14.015650); // methylation
-
-        //  modToDeltaMap.put("Deimination", 0.984016); // deamidation on R
-
-        modToDeltaMap.put("Carbamyl", 43.005814); // carbamylation of N terminus or lysines
-
-        modToDeltaMap.put("iTRAQ4plex", 144.102063); // iTRAQ 4-plex
-
-        modToDeltaMap.put("iTRAQ4plexAcetyl", 186.112628); // iTRAQ 4-plex
-
-        modToDeltaMap.put("iTRAQ8plex:13C(6)15N(2)", 304.19904); // iTRAQ on N terminus or K
-        modToDeltaMap.put("iTRAQ8plex", 304.20536); // iTRAQ on N terminus or K
-
-
-        modToDeltaMap.put("TMT6plex", 229.162932); // TMT 6-plex
-
-        modToDeltaMap.put("PEO-Iodoacetyl-LC-Biotin", 414.52); // Hui Zhang's PEO alkylation agent on cysteines
-
-        modToDeltaMap.put("Label:2H(3)", 3.018830); // SILAC heavy leucine (+3)
-
-        modToDeltaMap.put("Label:2H(4)", 4.025107); // Lys4 label (+4)
-
-        modToDeltaMap.put("Label:13C(6)", 6.020129); // SILAC heavy lysine and arginine (+6)
-        modToDeltaMap.put("Label:13C(6)15N(1)", 7.017165);
-        modToDeltaMap.put("Label:13C(6)15N(2)", 8.014199); // SILAC heavy lysine (+8)
-        modToDeltaMap.put("Label:13C(6)15N(3)", 9.011235);
-        modToDeltaMap.put("Label:13C(6)15N(4)", 10.008269); // SILAC heavy arginine (+10)
-
-        modToDeltaMap.put("Methylthio", 45.987721); // methylthiolated cysteine (cys blocking by MMTS)
-
-        modToDeltaMap.put("Leucyl", 113.08406); // leucine added to N-term or K
-        modToDeltaMap.put("Leucyl:13C(6)15N(1)", 120.101224); // heavy leucine added to N-term or K
-
-
-        modToDeltaMap.put("Nitro", 44.985078);
-        modToDeltaMap.put("Dimethyl", 28.031300);
-        modToDeltaMap.put("Trimethyl", 42.046950);
-
-        modToDeltaMap.put("Bromo", 77.910511);
-
-        // Ubl chains
-        modToDeltaMap.put("SUMO_1", 2135.920495); // SUMO-1 Tryptic/LysC tail
-        modToDeltaMap.put("SUMO_2_3_Tryp", 3549.536567); // SUMO-2/3 Tryptic tail
-        modToDeltaMap.put("Smt3_R93A_Tryp", 3812.747563); // Smt3_R93A Tryptic tail
-        modToDeltaMap.put("Smt3_R93A_LysC", 4544.074787); // Smt3_R93A LysC tail
-        modToDeltaMap.put("NEDD8_LysC", 1555.956231); // NEDD8 LysC tail
-        modToDeltaMap.put("Rub1_LysC", 2454.341699); // Rub1 LysC tail
-        modToDeltaMap.put("Ub_LysC", 1431.831075); // Ubiquitin LysC tail
-        modToDeltaMap.put("GlyGly", 114.042927); // Ubiquitin/NEDD8 Tryptic tail (2 glycines)
-
-        // added based on PSI-MOD entries
-        modToDeltaMap.put("Formyl", 27.994915);
-    }
-
-    @Override
+        @Override
     public String getFileHeader() {
         return "";
     }
@@ -152,50 +50,41 @@ public class ClusterMspConverter extends AbstractClusterConverter {
 
     @Override
     public String convertCluster(ICluster cluster) {
-        ClusterUtilities clusterUtilities = new ClusterUtilities(cluster);
+        try {
+            ClusterUtilities clusterUtilities = new ClusterUtilities(cluster);
 
-        StringBuilder mspString = new StringBuilder();
+            StringBuilder mspString = new StringBuilder();
 
-        mspString.append("Name: ").append(generateClusterName(clusterUtilities)).append("\n");
-        // TODO: calculate molecular weight based on (m/z * charge) - (charge * 1.008) but this line is optional
-        // mspString.append("MW: ").append(cluster.getAvPrecursorMz()).append("\n");
+            mspString.append("Name: ").append(generateClusterName(clusterUtilities)).append("\n");
 
-        String commentString = generateComments(cluster, clusterUtilities);
-        mspString.append("Comment: ").append(commentString).append("\n");
+            double molecularWeight = (cluster.getAvPrecursorMz() * clusterUtilities.getCharge()) - (clusterUtilities.getCharge() * 1.008);
+            mspString.append("MW: ").append(molecularWeight).append("\n");
 
-        // normalize intensity values
-        List<Integer> normalizedIntensities = null;
-        if (normalizeSpectra)
-            normalizedIntensities = normalizeIntensities(cluster.getConsensusIntensValues(), BASE_PEAK_INTENSITY);
+            String commentString = generateComments(cluster, clusterUtilities);
+            mspString.append("Comment: ").append(commentString).append("\n");
 
-        // get the product ion set
-        ProductIonSet productIonSet = getProductIonSet(cluster, clusterUtilities);
+            // normalize intensity values
+            List<Float> normalizedIntensities = null;
+            if (normalizeSpectra)
+                normalizedIntensities = normalizeIntensities(cluster.getConsensusIntensValues(), BASE_PEAK_INTENSITY);
 
-        // count the peaks ignoring any peaks with 0 m/z or intensity
-        int nPeaks = 0;
-        for (int i = 0; i < cluster.getConsensusMzValues().size(); i++) {
-            // ignore peaks with 0 m/z and 0 intensity
-            if (cluster.getConsensusMzValues().get(i) == 0) {
-                continue;
-            }
+            mspString.append("Num peaks: ").append(getPeakCount(cluster, normalizedIntensities)).append("\n");
 
-            if (normalizeSpectra) {
-                if (normalizedIntensities.get(i) == 0) {
-                    continue;
-                }
-            }
-            else {
-                if (cluster.getConsensusIntensValues().get(i) == 0)
-                    continue;
-            }
+            String annotatedPeakList = createPeakList(cluster, clusterUtilities, normalizedIntensities);
 
-            nPeaks++;
+            mspString.append(annotatedPeakList);
+
+            return mspString.toString();
         }
+        catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
 
-        mspString.append("Num peaks: ").append(nPeaks).append("\n");
-
-        Iterator<ProductIon> productIonIterator = productIonSet.iterator();
-        lastProductIon = null;
+    private String createPeakList(ICluster cluster, ClusterUtilities clusterUtilities, List<Float> normalizedIntensities) throws Exception {
+        StringBuilder peakListString = new StringBuilder();
+        ProductIonSet productIonSet = SpectrumAnnotator.getProductIonSet(cluster, clusterUtilities.getMostCommonPsm(), clusterUtilities.getCharge());
 
         // create the peak annotation set
         for (int i = 0; i < cluster.getConsensusMzValues().size(); i++) {
@@ -208,15 +97,13 @@ public class ClusterMspConverter extends AbstractClusterConverter {
 
             String intensityString = (normalizeSpectra) ? normalizedIntensities.get(i).toString() : cluster.getConsensusIntensValues().get(i).toString();
 
-            // TODO: add peak annotation field (in quotes, fields: [ion = ?/y/b...],
-
             // get the ion set
             String annotation = "";
             if (addAnnotationString) {
-                annotation = "\"" + getBestPeakAnnotation(cluster.getConsensusMzValues().get(i), productIonIterator, cluster, clusterUtilities) + "\"";
+                annotation = "\"" + getBestPeakAnnotation(cluster.getConsensusMzValues().get(i), productIonSet.iterator(), cluster, clusterUtilities) + "\"";
             }
 
-            mspString.append(
+            peakListString.append(
                     cluster.getConsensusMzValues().get(i))
                     .append(" ")
                     .append(intensityString)
@@ -225,7 +112,31 @@ public class ClusterMspConverter extends AbstractClusterConverter {
                     .append("\n");
         }
 
-        return mspString.toString();
+        return peakListString.toString();
+    }
+
+    private int getPeakCount(ICluster cluster, List<Float> normalizedIntensities) {
+        // count the peaks ignoring any peaks with 0 m/z or intensity
+        int nPeaks = 0;
+        for (int i = 0; i < cluster.getConsensusMzValues().size(); i++) {
+            // ignore peaks with 0 m/z and 0 intensity
+            if (cluster.getConsensusMzValues().get(i) == 0) {
+                continue;
+            }
+
+            if (normalizeSpectra) {
+                if (normalizedIntensities.get(i) == 0) {
+                    continue;
+                }
+            } else {
+                if (cluster.getConsensusIntensValues().get(i) == 0)
+                    continue;
+            }
+
+            nPeaks++;
+        }
+
+        return nPeaks;
     }
 
     private String getBestPeakAnnotation(Float mz, Iterator<ProductIon> iterator, ICluster cluster, ClusterUtilities clusterUtilities) {
@@ -326,96 +237,23 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         return annotations;
     }
 
-    private ProductIonSet getProductIonSet(ICluster cluster, ClusterUtilities clusterUtilities) {
-        // build the peak set
-        double mzValues[] = new double[cluster.getConsensusMzValues().size()];
-        double intensValues[] = new double[cluster.getConsensusMzValues().size()];
-
-        for (int i = 0; i < cluster.getConsensusMzValues().size(); i++) {
-            mzValues[i] = new Double(cluster.getConsensusMzValues().get(i));
-            intensValues[i] = new Double(cluster.getConsensusIntensValues().get(i));
-        }
-
-        PeakSet peakSet = PeakSet.getInstance(mzValues, intensValues);
-
-        // get the max psm ref
-        IPeptideSpectrumMatch maxPsm = getMaxSpecRef(cluster.getSpectrumReferences(), clusterUtilities.getMaxSequence());
-
-        // build the modification list
-        Map<Integer, PTModification> modifications = new HashMap<Integer, PTModification>();
-        Group nTerm = null, cTerm = null;
-
-        // TODO: find out how to report n- / c-term mods
-        for (IModification mod : maxPsm.getModifications()) {
-            if (mod.getPosition() == 0 || mod.getPosition() > maxPsm.getSequence().length())
-                continue;
-
-            int nPosition = mod.getPosition() - 1; // 0-based positions
-            PTM ptm = modReader.getPTMbyAccession(mod.getAccession());
-
-            if (ptm == null || ptm.getMonoDeltaMass() == null)
-                continue;
-
-            List<Double> avgMass = new ArrayList<Double>(1);
-            avgMass.add(ptm.getAveDeltaMass());
-            List<Double> monoMass = new ArrayList<Double>(1);
-            monoMass.add(ptm.getMonoDeltaMass());
-            PTModification ptModification = new PTModification(ptm.getName(), ptm.getName(), ptm.getDescription(), monoMass, avgMass);
-
-            modifications.put(nPosition, ptModification);
-        }
-
-        // build the ion set
-        int charge = clusterUtilities.getCharge();
-        if (charge < 1)
-            charge = 1;
-
-        Peptide peptide = new Peptide(clusterUtilities.getMaxSequence(), modifications); // TODO: add n / c term mods
-        PrecursorIon precursorIon = new DefaultPrecursorIon(peptide, charge);
-        PeptideScore peptideScore = new PeptideScore(precursorIon, peakSet);
-
-        return peptideScore.getProductIonSet();
-    }
-
-    private IPeptideSpectrumMatch getMaxSpecRef(List<ISpectrumReference> spectrumReferences, String maxSequence) {
-        // TODO: optimize this function - there might be incorrectly reported PTMs
-        int maxPtms = -1;
-        IPeptideSpectrumMatch maxPSM = null;
-
-        for (ISpectrumReference specRef : spectrumReferences) {
-            for (IPeptideSpectrumMatch psm : specRef.getPSMs()) {
-                String sequence = ClusterUtilities.cleanSequence(psm.getSequence());
-                if (!sequence.equals(maxSequence))
-                    continue;
-
-                if (psm.getModifications().size() > maxPtms) {
-                    maxPtms = psm.getModifications().size();
-                    maxPSM = psm;
-                }
-            }
-        }
-
-        return maxPSM;
-    }
-
-    private List<Integer> normalizeIntensities(List<Float> consensusIntensValues, int fixedHighestPeakIntensity) {
+    private List<Float> normalizeIntensities(List<Float> consensusIntensValues, int fixedHighestPeakIntensity) {
         // get the highest intensity
         float maxIntensity = Collections.max(consensusIntensValues);
 
         // calculate the factor
         float factor = fixedHighestPeakIntensity / maxIntensity;
 
-        List<Integer> normalizedIntensities = new ArrayList<Integer>(consensusIntensValues.size());
+        List<Float> normalizedIntensities = new ArrayList<Float>(consensusIntensValues.size());
 
         for (Float intensity : consensusIntensValues) {
-            // TODO: warning: roundings destroy several spectra (if the precursor wasn't removed f.e.)
-            normalizedIntensities.add(Math.round(intensity * factor));
+            normalizedIntensities.add(intensity * factor);
         }
 
         return normalizedIntensities;
     }
 
-    private String generateComments(ICluster cluster, ClusterUtilities clusterUtilities) {
+    private String generateComments(ICluster cluster, ClusterUtilities clusterUtilities) throws Exception {
         StringBuilder commentString = new StringBuilder();
 
         String modString = generateModString(cluster, clusterUtilities);
@@ -427,29 +265,17 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         commentString.append(" Naa=").append(clusterUtilities.getMaxSequence().length());
         commentString.append(" MaxRatio=").append(String.format("%.3f", clusterUtilities.getMaxILAngosticRatio()));
         commentString.append(" PrecursorMzRange=").append(String.format("%.4f", cluster.getSpectrumPrecursorMzRange()));
+        commentString.append(" DeltaMass=").append(String.format("%.2f", SpectrumAnnotator.getDeltaMass(clusterUtilities.getMostCommonPsm(), cluster.getAvPrecursorMz())));
+
         if (currentAnnotation != null)
             commentString.append(" Protein=" + currentAnnotation);
-        // TODO: add PRIDE Cluster specific fields
 
         return commentString.toString();
     }
 
-    private String generateModString(ICluster cluster, ClusterUtilities clusterUtilities) {
+    private String generateModString(ICluster cluster, ClusterUtilities clusterUtilities) throws Exception {
         // get the PSM for the most common sequence, use the one with most modifications annotated
-        String mostCommonSequence = clusterUtilities.getMaxSequence();
-        IPeptideSpectrumMatch psm = null;
-        int maxModNum = Integer.MIN_VALUE;
-
-        for (ISpectrumReference specRef : cluster.getSpectrumReferences()) {
-            for (IPeptideSpectrumMatch currentPsm : specRef.getPSMs()) {
-                String psmSequence = ClusterUtilities.cleanSequence(currentPsm.getSequence());
-
-                if (psmSequence.equals(mostCommonSequence) && currentPsm.getModifications().size() > maxModNum) {
-                    psm = currentPsm;
-                    maxModNum = currentPsm.getModifications().size();
-                }
-            }
-        }
+        IPeptideSpectrumMatch psm = clusterUtilities.getMostCommonPsm();
 
         // this case should never happen
         if (psm == null) {
@@ -461,6 +287,7 @@ public class ClusterMspConverter extends AbstractClusterConverter {
             return "0";
         }
 
+        ModReader modReader = ModReader.getInstance();
         StringBuilder modificationString = new StringBuilder();
         modificationString.append(psm.getModifications().size());
 
@@ -477,14 +304,14 @@ public class ClusterMspConverter extends AbstractClusterConverter {
 
             // if we can't get the delta, we'll use the accession as a name
             if (ptmObject == null) {
-                System.out.println("Warning: Failed to resolve modification " + modification.getAccession());
+                unresolvedAccessions.add(modification.getAccession());
                 modMspName = modification.getAccession();
             } else {
                 Double delta = ptmObject.getMonoDeltaMass();
 
                 // if there is no delta for the modification (incorrect modification supplied), use the accession
                 if (delta == null) {
-                    System.out.println("Warning: Modification accession supplied that is not associated with a mass delta: " + modification.getAccession());
+                    missingModMassAccessions.add(modification.getAccession());
                     modMspName = modification.getAccession();
                 } else {
                     // using the delta we try to match it to the MSP name
@@ -492,7 +319,7 @@ public class ClusterMspConverter extends AbstractClusterConverter {
 
                     // if the delta cannot be matched, we'll use the delta
                     if (modMspName == null) {
-                        System.out.println("Warning: Failed to match modification delta (" + modification.getAccession() + " > " + delta + ") to MSP name.");
+                        unmatchedModificationAccessions.add(modification.getAccession() + " > " + delta);
                         modMspName = delta.toString();
                     }
                 }
@@ -560,5 +387,43 @@ public class ClusterMspConverter extends AbstractClusterConverter {
 
     public void setAddAnnotationString(boolean addAnnotationString) {
         this.addAnnotationString = addAnnotationString;
+    }
+
+    private Map<String, Double> loadMspModMap() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                ClusterMspConverter.class.getClassLoader().getResourceAsStream("msp_mod_mapping.tsv")));
+
+        Map<String, Double> mspNameToDeltaMap = new HashMap<String, Double>();
+        try {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                // remove comments
+                int index = line.indexOf('#');
+                if (index >= 0) {
+                    line = line.substring(0, index);
+                }
+
+                // ignore empty lines
+                if (line.length() < 1)
+                    continue;
+
+                // split based on fields
+                String[] fields = line.split("\t");
+
+                if (fields.length < 2)
+                    throw new IllegalStateException("Invalid line encountered in msp_mod_mapping.tsv");
+
+                String mspName = fields[0];
+                Double deltaMass = Double.parseDouble(fields[1]);
+
+                mspNameToDeltaMap.put(mspName, deltaMass);
+            }
+
+            return mspNameToDeltaMap;
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to load MSP mod name map.");
+        }
     }
 }
