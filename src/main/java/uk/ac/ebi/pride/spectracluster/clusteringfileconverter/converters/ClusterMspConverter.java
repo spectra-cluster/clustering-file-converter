@@ -54,6 +54,19 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         try {
             ClusterUtilities clusterUtilities = new ClusterUtilities(cluster);
 
+            // TODO: add mandatory charge state recalculation
+            try {
+                // if this works, the clusterUtilities also use the calculated charge
+                int charge = SpectrumAnnotator.estimateCharge(cluster.getMaxSequence(), cluster.getAvPrecursorMz());
+
+                if (charge != clusterUtilities.getCharge())
+                    throw new IllegalStateException("Invalid cluster charge calculated");
+            }
+            catch (Exception e) {
+                throw new Exception("Failed to calculate cluster charge state for cluster " + cluster.getId(), e);
+            }
+
+
             StringBuilder mspString = new StringBuilder();
 
             mspString.append("Name: ").append(generateClusterName(clusterUtilities)).append("\n");
@@ -267,6 +280,8 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         commentString.append(" MaxRatio=").append(String.format("%.3f", clusterUtilities.getMaxILAngosticRatio()));
         commentString.append(" PrecursorMzRange=").append(String.format("%.4f", cluster.getSpectrumPrecursorMzRange()));
         commentString.append(" DeltaMass=").append(String.format("%.2f", SpectrumAnnotator.getDeltaMass(clusterUtilities.getMostCommonPsm(), cluster.getAvPrecursorMz())));
+        if (cluster.getId() != null)
+            commentString.append(" ClusterId=").append(cluster.getId());
 
         if (currentAnnotation != null)
             commentString.append(" Protein=" + currentAnnotation);
@@ -289,13 +304,13 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         }
 
         ModReader modReader = ModReader.getInstance();
-        StringBuilder modificationString = new StringBuilder();
-        modificationString.append(psm.getModifications().size());
 
         // sort by position and only use unique modifications
         List<IModification> modifications = new ArrayList<IModification>( new HashSet<IModification>(psm.getModifications()) );
         Collections.sort(modifications, new ModificationPositionComparator());
 
+        StringBuilder modificationString = new StringBuilder();
+        modificationString.append(modifications.size());
 
         for (IModification modification : modifications) {
             String modMspName;
