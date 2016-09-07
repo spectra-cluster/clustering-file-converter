@@ -19,6 +19,7 @@ public class CliOptions {
         COMBINE("combine"),
         FORMAT("format"),
         FASTA("fasta"),
+        INCLUDE_LARGE_DELTAS("include_large_deltas"),
         SPEC_LIB_ANNOTATION("spec_lib_add_annotation"),
         SPEC_LIB_NORMALIZE("spec_lib_normalize"),
         OUTPUT_PATH("output_path");
@@ -125,6 +126,11 @@ public class CliOptions {
                 .withDescription("if set spectra are normalized according to the MSP specification (highest peak = 10,000), intensity reported as integer")
                 .create(OPTIONS.SPEC_LIB_NORMALIZE.getValue());
         options.addOption(specLibNormalize);
+
+        Option includeLargeDeltas = OptionBuilder
+                .withDescription("include (identified) spectra with a delta mass > 1. By default these are excluded.")
+                .create(OPTIONS.INCLUDE_LARGE_DELTAS.getValue());
+        options.addOption(includeLargeDeltas);
 
         Option fasta = OptionBuilder
                 .withDescription("if set only peptides from the specified proteins will be exported and mapped to these proteins.")

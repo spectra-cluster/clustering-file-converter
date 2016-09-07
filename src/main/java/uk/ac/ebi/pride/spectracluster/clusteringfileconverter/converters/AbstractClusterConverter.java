@@ -20,6 +20,8 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     protected BufferedWriter writer;
     protected boolean append = false;
 
+    public final double MAX_DELTA_MASS = 1.0;
+
     protected int minSize = 0;
     protected int maxSize = Integer.MAX_VALUE;
     protected float minRatio = 0;
@@ -28,6 +30,7 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     protected FastaFile fastaFile = null;
     protected float minTic = Float.MAX_VALUE;
     protected float maxTic = 0;
+    protected boolean includeLargeDeltas = false;
 
     protected String currentAnnotation = null;
 
@@ -135,10 +138,24 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
             return false;
         if (cluster.getIdentifiedSpecCount() > maxSize)
             return false;
-        if (clusterUtilities.getMaxILAngosticRatio() < minRatio)
+        if (clusterUtilities.getMaxILAngosticSequenceRatio() < minRatio)
             return false;
-        if (clusterUtilities.getMaxILAngosticRatio() > maxRatio)
+        if (clusterUtilities.getMaxILAngosticSequenceRatio() > maxRatio)
             return false;
+
+        if (!includeLargeDeltas && cluster.getIdentifiedSpecCount() > 0) {
+            try {
+                double delta = SpectrumAnnotator.getDeltaMass(clusterUtilities.getMostCommonPsm(), cluster.getAvPrecursorMz());
+                if (delta > MAX_DELTA_MASS) {
+                    return false;
+                }
+            }
+            catch (Exception e) {
+                System.out.println("Waring: Failed to calculate delta mass for cluster " + cluster.getId() + ". Ignoring cluster.");
+                e.printStackTrace();
+                return false;
+            }
+        }
 
         // get the explained TIC
         try {
@@ -244,5 +261,9 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     @Override
     public void setFastaFile(FastaFile fastaFile) {
         this.fastaFile = fastaFile;
+    }
+
+    public void setIncludeLargeDeltas(boolean includeLargeDeltas) {
+        this.includeLargeDeltas = includeLargeDeltas;
     }
 }

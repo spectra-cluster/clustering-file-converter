@@ -9,6 +9,7 @@ import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpect
 import uk.ac.ebi.pride.utilities.exception.IllegalAminoAcidSequenceException;
 import uk.ac.ebi.pride.utilities.iongen.model.ProductIon;
 import uk.ac.ebi.pride.utilities.iongen.model.ProductIonSet;
+import uk.ac.ebi.pride.utilities.mol.MoleculeUtilities;
 import uk.ac.ebi.pridemod.ModReader;
 import uk.ac.ebi.pridemod.model.PTM;
 
@@ -54,22 +55,15 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         try {
             ClusterUtilities clusterUtilities = new ClusterUtilities(cluster);
 
-            // TODO: add mandatory charge state recalculation
-            try {
-                // if this works, the clusterUtilities also use the calculated charge
-                int charge = SpectrumAnnotator.estimateCharge(cluster.getMaxSequence(), cluster.getAvPrecursorMz());
+            // TODO: filter clusters where the most common PSM was identified with two different sequences
 
-                if (charge != clusterUtilities.getCharge())
-                    throw new IllegalStateException("Invalid cluster charge calculated");
+            if (clusterUtilities.isAverageCharge()) {
+                throw new Exception("Failed to calculate charge for cluster " + cluster.getId());
             }
-            catch (Exception e) {
-                throw new Exception("Failed to calculate cluster charge state for cluster " + cluster.getId(), e);
-            }
-
 
             StringBuilder mspString = new StringBuilder();
 
-            mspString.append("Name: ").append(generateClusterName(clusterUtilities)).append("\n");
+            mspString.append("Name: ").append(generateClusterName(clusterUtilities.getMaxSequence(), clusterUtilities.getCharge())).append("\n");
 
             double molecularWeight = (cluster.getAvPrecursorMz() * clusterUtilities.getCharge()) - (clusterUtilities.getCharge() * 1.008);
             mspString.append("MW: ").append(molecularWeight).append("\n");
@@ -375,8 +369,8 @@ public class ClusterMspConverter extends AbstractClusterConverter {
         return null;
     }
 
-    private String generateClusterName(ClusterUtilities clusterUtilities) {
-        return String.format("%s/%d", clusterUtilities.getMaxSequence(), clusterUtilities.getCharge());
+    private String generateClusterName(String sequence, int charge) {
+        return String.format("%s/%d", sequence, charge);
     }
 
     @Override
