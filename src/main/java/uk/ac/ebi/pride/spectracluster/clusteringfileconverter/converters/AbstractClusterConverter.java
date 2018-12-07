@@ -1,10 +1,10 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
-import uk.ac.ebi.pride.spectracluster.analysis.util.ClusterUtilities;
-import uk.ac.ebi.pride.spectracluster.analysis.util.SpectrumAnnotator;
+
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ClusterUtilities;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.SpectrumAnnotator;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
-import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ISpectrumReference;
 
 import java.io.BufferedWriter;
@@ -147,6 +147,7 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
             try {
                 double delta = SpectrumAnnotator.getDeltaMass(clusterUtilities.getMostCommonPsm(), cluster.getAvPrecursorMz());
                 if (delta > MAX_DELTA_MASS) {
+                    System.out.println("Ignoring cluster with delta = " + delta + " (id = " + cluster.getId() + ")");
                     return false;
                 }
             }

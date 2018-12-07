@@ -1,7 +1,10 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by jg on 21.05.15.

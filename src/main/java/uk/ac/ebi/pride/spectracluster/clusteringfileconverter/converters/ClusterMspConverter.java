@@ -1,15 +1,13 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
-import uk.ac.ebi.pride.spectracluster.analysis.util.ClusterUtilities;
-import uk.ac.ebi.pride.spectracluster.analysis.util.SpectrumAnnotator;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ClusterUtilities;
 import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ModificationPositionComparator;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.SpectrumAnnotator;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IModification;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
-import uk.ac.ebi.pride.utilities.exception.IllegalAminoAcidSequenceException;
 import uk.ac.ebi.pride.utilities.iongen.model.ProductIon;
 import uk.ac.ebi.pride.utilities.iongen.model.ProductIonSet;
-import uk.ac.ebi.pride.utilities.mol.MoleculeUtilities;
 import uk.ac.ebi.pridemod.ModReader;
 import uk.ac.ebi.pridemod.model.PTM;
 

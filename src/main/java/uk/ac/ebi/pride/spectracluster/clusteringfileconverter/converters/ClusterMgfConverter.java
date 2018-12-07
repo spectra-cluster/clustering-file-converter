@@ -1,10 +1,7 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
-import uk.ac.ebi.pride.spectracluster.analysis.util.ClusterUtilities;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ClusterUtilities;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
 /**
  * Created by jg on 09.08.14.
