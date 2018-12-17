@@ -1,12 +1,16 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
+
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.ClusterUtilities;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.SpectrumAnnotator;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
-import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.IPeptideSpectrumMatch;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ISpectrumReference;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Set;
 
 /**
  * Created by jg on 10.08.14.
@@ -16,11 +20,19 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     protected BufferedWriter writer;
     protected boolean append = false;
 
+    public final double MAX_DELTA_MASS = 1.0;
+
     protected int minSize = 0;
     protected int maxSize = Integer.MAX_VALUE;
     protected float minRatio = 0;
     protected float maxRatio = 1;
-    protected String species = null;
+    protected Set<String> species = null;
+    protected FastaFile fastaFile = null;
+    protected float minTic = Float.MAX_VALUE;
+    protected float maxTic = 0;
+    protected boolean includeLargeDeltas = false;
+
+    protected String currentAnnotation = null;
 
     @Override
     public void setOutputPath(String outputPath) {
@@ -94,6 +106,22 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
         return maxRatio;
     }
 
+    public float getMinTic() {
+        return minTic;
+    }
+
+    public void setMinTic(float minTic) {
+        this.minTic = minTic;
+    }
+
+    public float getMaxTic() {
+        return maxTic;
+    }
+
+    public void setMaxTic(float maxTic) {
+        this.maxTic = maxTic;
+    }
+
     @Override
     public abstract void onNewClusterRead(ICluster newCluster);
 
@@ -104,23 +132,63 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
      * @return
      */
     protected boolean shouldClusterBeExported(ICluster cluster) {
-        if (cluster.getSpecCount() < minSize)
+        ClusterUtilities clusterUtilities = new ClusterUtilities(cluster);
+
+        if (cluster.getIdentifiedSpecCount() < minSize)
             return false;
-        if (cluster.getSpecCount() > maxSize)
+        if (cluster.getIdentifiedSpecCount() > maxSize)
             return false;
-        if (cluster.getMaxRatio() < minRatio)
+        if (clusterUtilities.getMaxILAngosticSequenceRatio() < minRatio)
             return false;
-        if (cluster.getMaxRatio() > maxRatio)
+        if (clusterUtilities.getMaxILAngosticSequenceRatio() > maxRatio)
             return false;
+
+        if (!includeLargeDeltas && cluster.getIdentifiedSpecCount() > 0) {
+            try {
+                double delta = SpectrumAnnotator.getDeltaMass(clusterUtilities.getMostCommonPsm(), cluster.getAvPrecursorMz());
+                if (delta > MAX_DELTA_MASS) {
+                    System.out.println("Ignoring cluster with delta = " + delta + " (id = " + cluster.getId() + ")");
+                    return false;
+                }
+            }
+            catch (Exception e) {
+                System.out.println("Waring: Failed to calculate delta mass for cluster " + cluster.getId() + ". Ignoring cluster.");
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        // get the explained TIC
+        try {
+            float explainedTIC = SpectrumAnnotator.getAnnotatedTic(cluster, 0.5f);
+
+            if (explainedTIC < minTic)
+                return false;
+            if (explainedTIC > maxTic)
+                return false;
+        }
+        catch (Exception e) {
+            // don't export clusters that cannot be explained
+            return false;
+        }
+
 
         // check if the taxonomy needs to be taken into consideration
         boolean containsSpecies = false;
 
-        if (species != null && species.length() > 0) {
+        if (species != null && species.size() > 0) {
             for (ISpectrumReference specRef : cluster.getSpectrumReferences()) {
-                if (species.equals(specRef.getSpecies()))  {
-                    containsSpecies = true;
-                    break;
+                // ignore if no species is available
+                if (specRef.getSpecies() == null)
+                    continue;
+
+                String[] specRefSpecies = specRef.getSpecies().split(",");
+
+                for (String s : specRefSpecies) {
+                    if (species.contains(s)) {
+                        containsSpecies = true;
+                        break;
+                    }
                 }
             }
         }
@@ -131,6 +199,16 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
 
         if (!containsSpecies)
             return false;
+
+        // check if a fasta file was set
+        if (fastaFile != null) {
+            String proteinAnnotation = fastaFile.getProteinAnnotation(cluster.getMaxSequence());
+
+            if (proteinAnnotation == null)
+                return false;
+
+            currentAnnotation = proteinAnnotation;
+        }
 
         return true;
     }
@@ -167,12 +245,26 @@ public abstract class AbstractClusterConverter implements IClusterConverter {
     }
 
     @Override
-    public void setSpecies(String species) {
+    public Set<String> getSpecies() {
+        return species;
+    }
+
+    @Override
+    public void setSpecies(Set<String> species) {
         this.species = species;
     }
 
     @Override
-    public String getSpecies() {
-        return species;
+    public FastaFile getFastaFile() {
+        return fastaFile;
+    }
+
+    @Override
+    public void setFastaFile(FastaFile fastaFile) {
+        this.fastaFile = fastaFile;
+    }
+
+    public void setIncludeLargeDeltas(boolean includeLargeDeltas) {
+        this.includeLargeDeltas = includeLargeDeltas;
     }
 }

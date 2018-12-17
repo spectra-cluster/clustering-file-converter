@@ -38,8 +38,11 @@ public class DuplicatedModTest {
 
             String mspString = converter.convertCluster(cluster);
 
+            if (mspString.length() < 1)
+                continue;
+
             String[] lines = mspString.split("\n");
-            String commentLine = lines[1].substring(31);
+            String commentLine = lines[2];
 
             Assert.assertFalse(cluster.getId() + " - " + nCluster, commentLine.contains("0,K,Acetyl/0,K,Acetyl"));
         }

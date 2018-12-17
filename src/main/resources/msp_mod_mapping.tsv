@@ -1,0 +1,98 @@
+# This code was extracted from the SpectraST source code. I was
+# unable to find these modifications in the MSP format
+# specification.
+#ICAT_light	227.126991
+ICAT-C	227.126991 # PSI new name
+
+#ICAT_heavy	236.157185
+ICAT-C:13C(9)	236.157185 # PSI new name
+
+#AB_old_ICATd0	442.224991
+ICAT-D	442.224991 # PSI new name
+
+#AB_old_ICATd8	450.275205
+ICAT-D:2H(8)	450.275205 # PSI new name
+
+Carbamidomethyl	57.021464
+Carboxymethyl	58.005479
+
+Propionamide	71.037114 # alkylation of acrylamide to cysteines
+Propionamide:2H(3)	74.055944 # alkylation of heavy acrylamide to cysteines
+Propionamide:13C(3)	74.047178 # alkylation of heavy acrylamide to cysteines
+
+Oxidation	15.99491
+Acetyl	42.010565 # acetylation of N terminus
+
+Deamidation	0.984016
+#Deamidated	0.984016 # PSI new name
+
+Pyro-cmC	39.994915 # cyclicization of N-terminal CAM-cysteine (FIXED value 01/27/07)
+#Pyro-carbamidomethyl	39.994915 # PSI new name
+
+Pyro-glu	-17.026549 # loss of NH3 from glutamine
+#Gln->pyro-Glu	-17.026549 # PSI new name
+
+Pyro_glu	-18.010565 # loss of H2O from glutamic acid
+#Glu->pyro-Glu	-18.010565 # PSI new name
+
+Amide	-0.984016 # amidation of C terminus
+#Amidated	-0.984016 # PSI new name
+
+Phospho	79.966331 # phosphorylation
+
+Thiophospho	95.943487 # phosphorylation
+
+Sulfo	79.956815 # O-sulfonation
+
+Methyl	14.015650 # methylation
+
+#Deimination	0.984016 # deamidation on R
+
+Carbamyl	43.005814 # carbamylation of N terminus or lysines
+
+iTRAQ4plex	144.102063 # iTRAQ 4-plex
+
+iTRAQ4plexAcetyl	186.112628 # iTRAQ 4-plex
+
+iTRAQ8plex:13C(6)15N(2)	304.19904 # iTRAQ on N terminus or K
+iTRAQ8plex	304.20536 # iTRAQ on N terminus or K
+
+
+TMT6plex	229.162932 # TMT 6-plex
+
+PEO-Iodoacetyl-LC-Biotin	414.52 # Hui Zhang's PEO alkylation agent on cysteines
+
+Label:2H(3)	3.018830 # SILAC heavy leucine (+3)
+
+Label:2H(4)	4.025107 # Lys4 label (+4)
+
+Label:13C(6)	6.020129 # SILAC heavy lysine and arginine (+6)
+Label:13C(6)15N(1)	7.017165
+Label:13C(6)15N(2)	8.014199 # SILAC heavy lysine (+8)
+Label:13C(6)15N(3)	9.011235
+Label:13C(6)15N(4)	10.008269 # SILAC heavy arginine (+10)
+
+Methylthio	45.987721 # methylthiolated cysteine (cys blocking by MMTS)
+
+Leucyl	113.08406 # leucine added to N-term or K
+Leucyl:13C(6)15N(1)	120.101224 # heavy leucine added to N-term or K
+
+
+Nitro	44.985078
+Dimethyl	28.031300
+Trimethyl	42.046950
+
+Bromo	77.910511
+
+# Ubl chains
+SUMO_1	2135.920495 # SUMO-1 Tryptic/LysC tail
+SUMO_2_3_Tryp	3549.536567 # SUMO-2/3 Tryptic tail
+Smt3_R93A_Tryp	3812.747563 # Smt3_R93A Tryptic tail
+Smt3_R93A_LysC	4544.074787 # Smt3_R93A LysC tail
+NEDD8_LysC	1555.956231 # NEDD8 LysC tail
+Rub1_LysC	2454.341699 # Rub1 LysC tail
+Ub_LysC	1431.831075 # Ubiquitin LysC tail
+GlyGly	114.042927 # Ubiquitin/NEDD8 Tryptic tail (2 glycines)
+
+# added based on PSI-MOD entries
+Formyl	27.994915

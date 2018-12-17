@@ -13,9 +13,13 @@ public class CliOptions {
         MIN_RATIO("min_ratio"),
         MIN_SIZE("min_size"),
         MAX_SIZE("max_size"),
+        MIN_TIC("min_tic"),
+        MAX_TIC("max_tic"),
         SPECIES("species"),
         COMBINE("combine"),
         FORMAT("format"),
+        FASTA("fasta"),
+        INCLUDE_LARGE_DELTAS("include_large_deltas"),
         SPEC_LIB_ANNOTATION("spec_lib_add_annotation"),
         SPEC_LIB_NORMALIZE("spec_lib_normalize"),
         OUTPUT_PATH("output_path");
@@ -56,7 +60,7 @@ public class CliOptions {
         options.addOption(maxRatio);
 
         Option minSize = OptionBuilder
-                .withDescription("limits the minimum SIZE a cluster may have to be included.")
+                .withDescription("limits the minimum number of identified spectra a cluster may have to be included.")
                 .hasArg()
                 .withArgName("SIZE")
                 .withType(Integer.class)
@@ -64,15 +68,31 @@ public class CliOptions {
         options.addOption(minSize);
 
         Option maxSize = OptionBuilder
-                .withDescription("limits the maximum SIZE a cluster may have to be included.")
+                .withDescription("limits the maximum number of identified spectra a cluster may have to be included.")
                 .hasArg()
                 .withArgName("SIZE")
                 .withType(Integer.class)
                 .create(OPTIONS.MAX_SIZE.getValue());
         options.addOption(maxSize);
 
+        Option maxTic = OptionBuilder
+                .withDescription("limits the maximum ion current explained by y- and b-ions.")
+                .hasArg()
+                .withArgName("fraction TIC")
+                .withType(Double.class)
+                .create(OPTIONS.MAX_TIC.getValue());
+        options.addOption(maxTic);
+
+        Option minTic = OptionBuilder
+                .withDescription("limits the minimum ion current explained by y- and b-ions.")
+                .hasArg()
+                .withArgName("fraction TIC")
+                .withType(Double.class)
+                .create(OPTIONS.MIN_TIC.getValue());
+        options.addOption(minTic);
+
         Option species = OptionBuilder
-                .withDescription("only exports cluster that contain at least on spectrum from the specified species.")
+                .withDescription("only exports cluster that contain at least one spectrum from the specified species. Multiple species may be defined")
                 .hasArg()
                 .withArgName("TAXONOMY ID")
                 .withType(Integer.class)
@@ -106,6 +126,17 @@ public class CliOptions {
                 .withDescription("if set spectra are normalized according to the MSP specification (highest peak = 10,000), intensity reported as integer")
                 .create(OPTIONS.SPEC_LIB_NORMALIZE.getValue());
         options.addOption(specLibNormalize);
+
+        Option includeLargeDeltas = OptionBuilder
+                .withDescription("include (identified) spectra with a delta mass > 1. By default these are excluded.")
+                .create(OPTIONS.INCLUDE_LARGE_DELTAS.getValue());
+        options.addOption(includeLargeDeltas);
+
+        Option fasta = OptionBuilder
+                .withDescription("if set only peptides from the specified proteins will be exported and mapped to these proteins.")
+                .hasArg()
+                .create(OPTIONS.FASTA.getValue());
+        options.addOption(fasta);
 
 		Option help = OptionBuilder
                 .withDescription("print this help.")

@@ -38,8 +38,11 @@ public class ZeroPositionTest {
 
             String mspString = converter.convertCluster(cluster);
 
+            if (mspString.length() < 1)
+                continue;
+
             String[] lines = mspString.split("\n");
-            String commentLine = lines[1].substring(31);
+            String commentLine = lines[2].substring(31);
 
             if (nCluster == 101 || nCluster == 103)
                 continue;

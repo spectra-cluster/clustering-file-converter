@@ -1,7 +1,10 @@
 package uk.ac.ebi.pride.spectracluster.clusteringfileconverter.converters;
 
+import uk.ac.ebi.pride.spectracluster.clusteringfileconverter.util.FastaFile;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.io.IClusterSourceListener;
 import uk.ac.ebi.pride.spectracluster.clusteringfilereader.objects.ICluster;
+
+import java.util.Set;
 
 /**
  * Created by jg on 01.08.14.
@@ -60,11 +63,16 @@ public interface IClusterConverter extends IClusterSourceListener {
     public void setMaxSize(int maxSize);
     public void setMinRatio(float minRatio);
     public void setMaxRatio(float maxRatio);
-    public void setSpecies(String taxonomyId);
-    public String getSpecies();
+    public void setSpecies(Set<String> taxonomyIds);
+    public void setFastaFile(FastaFile fastFile);
+    public void setMinTic(float minTic);
+    public void setMaxTic(float maxTic);
+
 
     public int getMinSize();
     public int getMaxSize();
     public float getMinRatio();
     public float getMaxRatio();
+    public Set<String> getSpecies();
+    public FastaFile getFastaFile();
 }
