@@ -27,6 +27,7 @@
       <excludes>
         <exclude>junit:junit</exclude>
       </excludes>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}.${artifact.extension}</outputFileNameMapping>
     </dependencySet>
   </dependencySets>
 </assembly>
