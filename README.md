@@ -26,7 +26,7 @@ The basic conversion to an MSP file looks like this:
 java -jar clustering-file-converter-1.0-SNAPSHOT.jar \
   -format msp \
   -output_path my_library.msp \
-  -max_ratio 0.7 \
+  -min_ratio 0.7 \
   -min_size 3 \
   -spec_lib_add_annotation \
   my_cluster_result.clustering  
@@ -36,7 +36,7 @@ This will convert the `my_cluster_resul.clustering` clustering result
 file into one MSP file.
 
 Only clusters where 70% of the spectra were identified as the same
-peptide (`-max_ration 0.7`) with at least 3 spetra (`-min_size 3`)
+peptide (`-min_ration 0.7`) with at least 3 spetra (`-min_size 3`)
 will be included in the MSP file.
 
 The addition of annotations (`-spec_lib_add_annotation`) is optional
